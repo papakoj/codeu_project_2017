@@ -52,6 +52,7 @@ public final class ClientUser {
     } else {
 
       // TODO: check for invalid characters
+      return !(userName.matches("^.*[^a-zA-Z0-9 ].*$")); /// Implemented check for non alphanumeric characters
 
     }
     return clean;
