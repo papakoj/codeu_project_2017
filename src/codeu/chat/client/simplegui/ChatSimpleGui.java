@@ -59,10 +59,6 @@ public final class ChatSimpleGui {
     return BorderFactory.createCompoundBorder(outside, inside);
   }
 
-  private void testFunc(WindowEvent windowEvent) {
-  	System.out.println(windowEvent.getNewState());
-  }
-
   // Initialize the GUI
   private void initialize() {
 
@@ -126,6 +122,7 @@ public final class ChatSimpleGui {
     mainViewPanel.add(messagesViewPanel, messagesViewC);
 
     mainFrame.add(mainViewPanel);
+    
     mainFrame.pack();
   }
 }

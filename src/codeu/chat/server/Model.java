@@ -15,6 +15,7 @@
 package codeu.chat.server;
 
 import java.util.Comparator;
+import java.sql.*;
 
 import codeu.chat.common.Conversation;
 import codeu.chat.common.ConversationSummary;
@@ -71,6 +72,28 @@ public final class Model {
   public void add(User user) {
     currentUserGeneration = userGenerations.make();
 
+    /// SQLite
+    Connection c = null; /// Create connection
+    Statement stmt = null;
+    try {
+      Class.forName("org.sqlite.JDBC");
+      c = DriverManager.getConnection("jdbc:sqlite:test.db"); /// Connect to database
+      c.setAutoCommit(false); 
+      System.out.println("Opened database successfully model");
+
+      stmt = c.createStatement();
+      ///Test data to be entered into table
+      String sql = "INSERT INTO USER (ID,TIME,NAME) " +  
+                   "VALUES (1234, 252525, 'Papa');"; 
+      stmt.executeUpdate(sql);
+      stmt.close();
+      c.commit();
+      c.close();
+    } catch ( Exception e ) {
+      System.err.println( e.getClass().getName() + ": " + e.getMessage() );
+      System.exit(0);
+    }
+    System.out.println("Records created successfully");
     userById.insert(user.id, user);
     userByTime.insert(user.creation, user);
     userByText.insert(user.name, user);
