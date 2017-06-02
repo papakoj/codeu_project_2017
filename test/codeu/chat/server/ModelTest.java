@@ -17,6 +17,9 @@ package codeu.chat.server;
 import static org.junit.Assert.*;
 import org.junit.Test;
 import org.junit.Before;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.Path;
 
 import java.util.Comparator;
 import java.sql.Connection;
@@ -44,11 +47,17 @@ public final class ModelTest {
   private static final String USER_TABLE = "USER";
   private static final String SQLITE_CLASS = "org.sqlite.JDBC";
   private static final int UUID_SUBSTRING_START = 6;
+  private static final Path path = Paths.get("./codeutest.db");
 
   private Model model;
 
   @Before
   public void doBefore() {
+    try {
+      Files.deleteIfExists(path);
+    } catch (IOException e) {
+      System.err.println( e.getClass().getName() + ": " + e.getMessage() );
+    }
     model = new Model();
   }
 
@@ -71,7 +80,10 @@ public final class ModelTest {
       assertTrue(
         "Check that the table exists/has been created.",
         rs.isBeforeFirst());
- 
+
+      stmt.close();
+      conn.close();
+
     } catch ( Exception e ) {
       System.err.println( e.getClass().getName() + ": " + e.getMessage() );
       System.exit(0);
@@ -81,6 +93,50 @@ public final class ModelTest {
 
   @Test
   public void testAddUser() {
+    Uuid uuid = new Uuid(25);
+    Long testTime = new Long(199);
+    User testUser = new User(uuid, "TestUser", Time.fromMs(testTime));
+    model.add(testUser);
 
+    Model model2 = new Model();
+    
+    Connection conn = null; // Placeholder for connection to DATABASE
+    Statement stmt = null; // Placeholder for sql command
+    try {
+
+      // Loads the JDBC class dynamically to handle the SQL connection
+      // DriverManager cannot create the connection if this class isn't loaded at runtime
+      Class.forName(SQLITE_CLASS);
+      
+      // Connect to DATABASE. Creates DATABASE if it doesn't exist.
+      conn = DriverManager.getConnection("jdbc:sqlite:" + DATABASE);
+      DatabaseMetaData dbm = conn.getMetaData();
+      ResultSet rs = dbm.getTables(null, null, USER_TABLE, null);
+      
+      String sql = "SELECT ID, TIME, NAME FROM " + USER_TABLE;
+      stmt = conn.createStatement();
+      ResultSet users = stmt.executeQuery(sql);
+      
+      if (users.next()) {
+        assertEquals("Check that the username matches", "TestUser", users.getString("NAME"));
+
+        assertEquals("Check that the time matches", (long) testTime, users.getLong("TIME"));
+
+        String uuidString = users.getString("ID");
+        uuidString = uuidString.substring(UUID_SUBSTRING_START, uuidString.length() - 1);
+        Uuid useruuid = null;
+        try {
+          useruuid = Uuid.parse(uuidString);
+        } catch (IOException io) {
+            System.out.println(io.getMessage());
+        }
+
+        assertEquals("Check that the Uuid matches", uuid, useruuid);
+      }
+        stmt.close();
+        conn.close();  
+    } catch ( Exception e ) {
+      System.err.println( e.getClass().getName() + ": " + e.getMessage() );
+    }
   }
 }
