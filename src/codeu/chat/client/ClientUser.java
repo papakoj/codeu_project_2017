@@ -18,6 +18,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 
 import codeu.chat.common.User;
 import codeu.chat.util.Logger;
@@ -42,7 +44,9 @@ public final class ClientUser {
   public ClientUser(Controller controller, View view) {
     this.controller = controller;
     this.view = view;
-  }
+    }
+ 
+
 
   // Validate the username string
   static public boolean isValidName(String userName) {
@@ -51,9 +55,9 @@ public final class ClientUser {
       clean = false;
     } else {
 
-      // TODO: check for invalid characters
-      return !(userName.matches("^.*[^a-zA-Z0-9 ].*$")); /// Implemented check for non alphanumeric characters
-
+      Pattern pattern = Pattern.compile("^[a-zA-Z0-9]*$");
+      Matcher matcher = pattern.matcher(userName);
+      return matcher.matches();
     }
     return clean;
   }

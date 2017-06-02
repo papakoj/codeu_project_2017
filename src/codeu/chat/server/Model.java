@@ -15,7 +15,12 @@
 package codeu.chat.server;
 
 import java.util.Comparator;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.Statement;
+import java.io.IOException;
 
 import codeu.chat.common.Conversation;
 import codeu.chat.common.ConversationSummary;
@@ -69,31 +74,95 @@ public final class Model {
   private final Uuid.Generator userGenerations = new LinearUuidGenerator(null, 1, Integer.MAX_VALUE);
   private Uuid currentUserGeneration = userGenerations.make();
 
-  public void add(User user) {
-    currentUserGeneration = userGenerations.make();
+  private final String database = "codeutest.db";
+  private final String userTable = "USER";
+  private final String sqliteClass = "org.sqlite.JDBC";
 
-    /// SQLite
-    Connection c = null; /// Create connection
-    Statement stmt = null;
+  public Model () {
+    Connection conn = null; // Placeholder for connection to database
+    Statement stmt = null; // Placeholder for sql command
     try {
-      Class.forName("org.sqlite.JDBC");
-      c = DriverManager.getConnection("jdbc:sqlite:test.db"); /// Connect to database
-      c.setAutoCommit(false); 
-      System.out.println("Opened database successfully model");
 
-      stmt = c.createStatement();
-      ///Test data to be entered into table
-      String sql = "INSERT INTO USER (ID,TIME,NAME) " +  
-                   "VALUES (1234, 252525, 'Papa');"; 
-      stmt.executeUpdate(sql);
-      stmt.close();
-      c.commit();
-      c.close();
+      // Loads the JDBC class dynamically to handle the SQL connection
+      // DriverManager cannot create the connection if this class isn't loaded at runtime
+      Class.forName(sqliteClass);
+      
+      // Connect to database. Creates database if it doesn't exist.
+      conn = DriverManager.getConnection("jdbc:sqlite:" + database);
+      DatabaseMetaData dbm = conn.getMetaData();
+      ResultSet rs = dbm.getTables(null, null, userTable, null);
+       
+      if (rs.next()) { // Table exists
+       
+        String sql = "SELECT ID, TIME, NAME FROM " + userTable;
+        stmt = conn.createStatement();
+        ResultSet users = stmt.executeQuery(sql);
+        // loop through the result set
+        while (users.next()) {
+          
+          String username = users.getString("NAME");
+          String uuidString = users.getString("ID");
+          uuidString = uuidString.substring(6, uuidString.length() - 1);
+          
+          try {
+            Uuid useruuid = Uuid.parse(uuidString);
+            User u = new User(useruuid, username, Time.fromMs(users.getLong("TIME"))); 
+            restoreUser(u);
+          } catch (IOException io) {
+              System.out.println(io.getMessage());
+          }
+        }
+
+        stmt.close();
+        conn.close();  
+      } else { // Table does not exist
+          stmt = conn.createStatement();
+          // Command to create USER table
+          String sql = "CREATE TABLE   " + userTable +
+          "(ID TEXT PRIMARY KEY     NOT NULL," +
+          " TIME           BIGINT     NOT NULL, " + 
+          " NAME           TEXT    NOT NULL" + 
+          ")"; 
+          stmt.executeUpdate(sql);
+          stmt.close();
+          conn.close();
+        }
     } catch ( Exception e ) {
       System.err.println( e.getClass().getName() + ": " + e.getMessage() );
       System.exit(0);
     }
-    System.out.println("Records created successfully");
+}
+
+  public void executeSQL(Connection conn, String statement) {
+
+  }
+
+  public void add(User user) {
+    currentUserGeneration = userGenerations.make();
+
+    Connection conn = null; 
+    Statement stmt = null;
+    try {
+      Class.forName(sqliteClass); 
+      conn = DriverManager.getConnection("jdbc:sqlite:" + database); 
+      stmt = conn.createStatement();
+      String sql = "INSERT INTO " + userTable + " (ID,TIME,NAME) " +  
+                   "VALUES ('"+ user.id.toString() + "', " + user.creation.inMs() + ", '" + user.name + "');"; 
+      stmt.executeUpdate(sql);
+      stmt.close();
+      conn.close();
+    } catch ( Exception e ) {
+        System.err.println( e.getClass().getName() + ": " + e.getMessage() );
+        System.exit(0);
+    }
+    
+    userById.insert(user.id, user);
+    userByTime.insert(user.creation, user);
+    userByText.insert(user.name, user);
+  }
+
+  public void restoreUser(User user) {
+    currentUserGeneration = userGenerations.make();
     userById.insert(user.id, user);
     userByTime.insert(user.creation, user);
     userByText.insert(user.name, user);

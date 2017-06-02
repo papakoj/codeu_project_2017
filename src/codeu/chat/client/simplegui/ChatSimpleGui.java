@@ -65,13 +65,16 @@ public final class ChatSimpleGui {
     // Outermost frame.
     // NOTE: may have tweak size, or place in scrollable panel.
     mainFrame = new JFrame("Chat");
+  
+    // Disabled instant close when exit button is pressed
     mainFrame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+    // Present the user with dialog box to confirm exit
     mainFrame.addWindowListener(new WindowAdapter() {
     	public void windowClosing(WindowEvent windowEvent){
             if (JOptionPane.showConfirmDialog(mainFrame, "Are you sure you want to quit?", "Confirm exit.", JOptionPane.OK_OPTION, 0, new ImageIcon("")) != 0) {
                 return;
             }
-            System.exit(-1);  
+            System.exit(-1);
          }  
      });
     mainFrame.setSize(790, 450);
