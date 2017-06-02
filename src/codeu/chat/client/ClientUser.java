@@ -33,6 +33,8 @@ public final class ClientUser {
   private static final Collection<Uuid> EMPTY = Arrays.asList(new Uuid[0]);
   private final Controller controller;
   private final View view;
+  private static final Pattern PATTERN = Pattern.compile("^[a-zA-Z0-9]*$");
+
 
   private User current = null;
 
@@ -54,9 +56,7 @@ public final class ClientUser {
     if (userName.length() == 0) {
       clean = false;
     } else {
-
-      Pattern pattern = Pattern.compile("^[a-zA-Z0-9]*$");
-      Matcher matcher = pattern.matcher(userName);
+      Matcher matcher = PATTERN.matcher(userName);
       return matcher.matches();
     }
     return clean;

@@ -74,27 +74,28 @@ public final class Model {
   private final Uuid.Generator userGenerations = new LinearUuidGenerator(null, 1, Integer.MAX_VALUE);
   private Uuid currentUserGeneration = userGenerations.make();
 
-  private final String database = "codeutest.db";
-  private final String userTable = "USER";
-  private final String sqliteClass = "org.sqlite.JDBC";
+  private static final String DATABASE = "codeutest.db";
+  private static final String USER_TABLE = "USER";
+  private static final String SQLITE_CLASS = "org.sqlite.JDBC";
+  private static final int UUID_SUBSTRING_START = 6;
 
   public Model () {
-    Connection conn = null; // Placeholder for connection to database
+    Connection conn = null; // Placeholder for connection to DATABASE
     Statement stmt = null; // Placeholder for sql command
     try {
 
       // Loads the JDBC class dynamically to handle the SQL connection
       // DriverManager cannot create the connection if this class isn't loaded at runtime
-      Class.forName(sqliteClass);
+      Class.forName(SQLITE_CLASS);
       
-      // Connect to database. Creates database if it doesn't exist.
-      conn = DriverManager.getConnection("jdbc:sqlite:" + database);
+      // Connect to DATABASE. Creates DATABASE if it doesn't exist.
+      conn = DriverManager.getConnection("jdbc:sqlite:" + DATABASE);
       DatabaseMetaData dbm = conn.getMetaData();
-      ResultSet rs = dbm.getTables(null, null, userTable, null);
+      ResultSet rs = dbm.getTables(null, null, USER_TABLE, null);
        
       if (rs.next()) { // Table exists
        
-        String sql = "SELECT ID, TIME, NAME FROM " + userTable;
+        String sql = "SELECT ID, TIME, NAME FROM " + USER_TABLE;
         stmt = conn.createStatement();
         ResultSet users = stmt.executeQuery(sql);
         // loop through the result set
@@ -102,7 +103,8 @@ public final class Model {
           
           String username = users.getString("NAME");
           String uuidString = users.getString("ID");
-          uuidString = uuidString.substring(6, uuidString.length() - 1);
+          // Removes the extra text in the Uuid ("[Uuid:]")
+          uuidString = uuidString.substring(UUID_SUBSTRING_START, uuidString.length() - 1);
           
           try {
             Uuid useruuid = Uuid.parse(uuidString);
@@ -118,7 +120,7 @@ public final class Model {
       } else { // Table does not exist
           stmt = conn.createStatement();
           // Command to create USER table
-          String sql = "CREATE TABLE   " + userTable +
+          String sql = "CREATE TABLE   " + USER_TABLE +
           "(ID TEXT PRIMARY KEY     NOT NULL," +
           " TIME           BIGINT     NOT NULL, " + 
           " NAME           TEXT    NOT NULL" + 
@@ -133,20 +135,16 @@ public final class Model {
     }
 }
 
-  public void executeSQL(Connection conn, String statement) {
-
-  }
-
   public void add(User user) {
     currentUserGeneration = userGenerations.make();
 
     Connection conn = null; 
     Statement stmt = null;
     try {
-      Class.forName(sqliteClass); 
-      conn = DriverManager.getConnection("jdbc:sqlite:" + database); 
+      Class.forName(SQLITE_CLASS); 
+      conn = DriverManager.getConnection("jdbc:sqlite:" + DATABASE); 
       stmt = conn.createStatement();
-      String sql = "INSERT INTO " + userTable + " (ID,TIME,NAME) " +  
+      String sql = "INSERT INTO " + USER_TABLE + " (ID,TIME,NAME) " +  
                    "VALUES ('"+ user.id.toString() + "', " + user.creation.inMs() + ", '" + user.name + "');"; 
       stmt.executeUpdate(sql);
       stmt.close();
@@ -161,7 +159,15 @@ public final class Model {
     userByText.insert(user.name, user);
   }
 
-  public void restoreUser(User user) {
+
+/**
+ * Restores a user from the SQL database into the memory stores of the 
+ * current chat application 
+ * 
+ * @param  user The user to be restored into the application
+ */
+  private void restoreUser(User user) {
+    // Ensures that Uuid's get incremented and prevents duplicates
     currentUserGeneration = userGenerations.make();
     userById.insert(user.id, user);
     userByTime.insert(user.creation, user);
