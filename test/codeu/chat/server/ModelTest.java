@@ -64,15 +64,12 @@ public final class ModelTest {
   @Test
   public void testModelConstructor() {
     model = new Model();
-    Connection conn = null; // Placeholder for connection to DATABASE
-    Statement stmt = null; // Placeholder for sql command
+    Connection conn = null;
+    Statement stmt = null; 
     try {
 
-      // Loads the JDBC class dynamically to handle the SQL connection
-      // DriverManager cannot create the connection if this class isn't loaded at runtime
       Class.forName(SQLITE_CLASS);
       
-      // Connect to DATABASE. Creates DATABASE if it doesn't exist.
       conn = DriverManager.getConnection("jdbc:sqlite:" + DATABASE);
       DatabaseMetaData dbm = conn.getMetaData();
       ResultSet rs = dbm.getTables(null, null, USER_TABLE, null);
@@ -80,13 +77,12 @@ public final class ModelTest {
       assertTrue(
         "Check that the table exists/has been created.",
         rs.isBeforeFirst());
-
+      
       stmt.close();
       conn.close();
 
     } catch ( Exception e ) {
       System.err.println( e.getClass().getName() + ": " + e.getMessage() );
-      System.exit(0);
     }
 
   }
