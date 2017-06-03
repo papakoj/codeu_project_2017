@@ -1,0 +1,12 @@
+To properly run the GUI client, you have to run the server at port 2007
+e.g. ./run_server.sh 100 ABABAB 2007 ./
+To simplify testing I had the GUI client always connect to that port.
+
+I am getting a NullPointerException in the tests I created (ModelTest).
+However, this is occurring after all my relevant code has run, 
+and I cannot find a reason as to why it's occurring.
+
+RawControllerTest is having errors when testing AddConversation and AddUser
+however I did not edit the Controller class and cannot currently figure out 
+why this is happening. 
+

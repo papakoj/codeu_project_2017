@@ -15,7 +15,6 @@
 package codeu.chat;
 
 import java.io.IOException;
-
 import codeu.chat.client.Controller;
 import codeu.chat.client.simplegui.ChatSimpleGui;
 import codeu.chat.client.View;
@@ -61,13 +60,11 @@ final class SimpleGuiClientMain {
   }
 
   private static void runClient(Controller controller, View view) {
-
     final ChatSimpleGui chatSimpleGui = new ChatSimpleGui(controller, view);
-
     LOG.info("Created client");
-
     chatSimpleGui.run();
-
     LOG.info("chat client is running.");
   }
+
+
 }

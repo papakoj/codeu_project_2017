@@ -18,6 +18,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 
 import codeu.chat.common.User;
 import codeu.chat.util.Logger;
@@ -31,6 +33,8 @@ public final class ClientUser {
   private static final Collection<Uuid> EMPTY = Arrays.asList(new Uuid[0]);
   private final Controller controller;
   private final View view;
+  private static final Pattern PATTERN = Pattern.compile("^[a-zA-Z0-9]*$");
+
 
   private User current = null;
 
@@ -42,7 +46,9 @@ public final class ClientUser {
   public ClientUser(Controller controller, View view) {
     this.controller = controller;
     this.view = view;
-  }
+    }
+ 
+
 
   // Validate the username string
   static public boolean isValidName(String userName) {
@@ -50,9 +56,8 @@ public final class ClientUser {
     if (userName.length() == 0) {
       clean = false;
     } else {
-
-      // TODO: check for invalid characters
-
+      Matcher matcher = PATTERN.matcher(userName);
+      return matcher.matches();
     }
     return clean;
   }
